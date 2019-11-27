@@ -3,24 +3,21 @@ use std::env;
 use futures::StreamExt;
 use telegram_bot::*;
 use regex::Regex;
-use std::{thread, time};
+use tokio::timer::Interval;
+use std::time::Duration;
 
-async fn count_command(api: Api, message: Message, arg: &str) -> Result<(), Error> {
+async fn count_command(api: Api, message: &Message, arg: &str) -> Result<(), Error> {
     let args: Vec<&str> = arg.trim().split(' ').collect();
-    let mut counter: u32 = match args[0].parse() {
-        Ok(counter) => counter,
-        Err(_e) => 5
-    };
     let last_msg = if args.len() <= 1 { "ㄱㄱ" } else { &args[1] };
-    loop {
-        if counter == 0 {
-            api.send(SendMessage::new(&message.chat, format!("{}", last_msg))).await?;
-            break;
-        }
-        api.send(SendMessage::new(&message.chat, format!("{}", counter))).await?;
-        thread::sleep(time::Duration::from_millis(1000));
+    let mut counter: u32 = args[0].parse().unwrap_or(5);
+    let mut interval = Interval::new_interval(Duration::from_millis(1000));
+
+    while counter != 0 {
+        api.send(message.chat.text(format!("{}", counter))).await?;
+        interval.next().await;
         counter -= 1;
     };
+    api.send(message.chat.text(format!("{}", last_msg))).await?;
     Ok(())
 }
 
@@ -32,7 +29,7 @@ async fn router(api: Api, message: Message) -> Result<(), Error> {
                 Some(cap) => {
                     if cap["botname"].len() <= 0 || &cap["botname"] == env::var("BOT_NAME").expect("BOT_NAME not set") {
                         match &cap["command"] {
-                            "cnt" => count_command(api, message.clone(), &cap["arg"]).await?,
+                            "cnt" => count_command(api, &message, &cap["arg"]).await?,
                             _ => (),
                         }
                     }
@@ -53,8 +50,14 @@ async fn main() -> Result<(), Error> {
     let mut stream = api.stream();
     while let Some(update) = stream.next().await {
         let update = update?;
+        let internal_api = api.clone();
         if let UpdateKind::Message(message) = update.kind {
-            router(api.clone(), message).await?
+            tokio::spawn(async move {
+                match router(internal_api, message).await {
+                    Err(e) => println!("{:?}", e),
+                    _ => (),
+                }
+            });
         }
     }
     Ok(())
