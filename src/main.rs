@@ -22,22 +22,16 @@ async fn count_command(api: Api, message: &Message, arg: &str) -> Result<(), Err
 }
 
 async fn router(api: Api, message: Message) -> Result<(), Error> {
-    match message.kind {
-        MessageKind::Text { ref data, .. } => {
-            let re = Regex::new(r"/(?P<command>\w*)@?(?P<botname>\S*)\s?(?P<arg>.*)").unwrap();
-            match re.captures(data.as_str()) {
-                Some(cap) => {
-                    if cap["botname"].len() <= 0 || &cap["botname"] == env::var("BOT_NAME").expect("BOT_NAME not set") {
-                        match &cap["command"] {
-                            "cnt" => count_command(api, &message, &cap["arg"]).await?,
-                            _ => (),
-                        }
-                    }
-                },
-                None => (),
-            };
-        },
-        _ => (),
+    if let MessageKind::Text { ref data, .. } = message.kind {
+        let re = Regex::new(r"/(?P<command>\w*)@?(?P<botname>\S*)\s?(?P<arg>.*)").unwrap();
+        if let Some(cap) = re.captures(data.as_str()) {
+            if cap["botname"].len() <= 0 || &cap["botname"] == env::var("BOT_NAME").expect("BOT_NAME not set") {
+                match &cap["command"] {
+                    "cnt" => count_command(api, &message, &cap["arg"]).await?,
+                    _ => (),
+                }
+            }
+        }
     };
     Ok(())
 }
@@ -53,9 +47,8 @@ async fn main() -> Result<(), Error> {
         let internal_api = api.clone();
         if let UpdateKind::Message(message) = update.kind {
             tokio::spawn(async move {
-                match router(internal_api, message).await {
-                    Err(e) => println!("{:?}", e),
-                    _ => (),
+                if let Err(e) = router(internal_api, message).await {
+                    println!("{:?}", e)
                 }
             });
         }
