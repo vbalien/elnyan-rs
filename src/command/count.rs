@@ -9,7 +9,7 @@ pub struct Count {}
 
 #[async_trait]
 impl Command for Count {
-    async fn execute(&self, api: Api, message: &Message, arg: &str) -> Result<(), Error> {
+    async fn execute(&self, api: Api, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>> {
         let args: Vec<&str> = arg.trim().split(' ').collect();
         let last_msg = if args.len() <= 1 { "ㄱㄱ" } else { &args[1] };
         let mut counter: u32 = args[0].parse().unwrap_or(5);

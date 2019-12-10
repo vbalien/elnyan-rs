@@ -17,7 +17,7 @@ impl App {
         }
     }
 
-    async fn router(&self, api: Api, message: Message) -> Result<(), Error> {
+    async fn router(&self, api: Api, message: Message) -> Result<(), Box<dyn std::error::Error>> {
         if let MessageKind::Text { ref data, .. } = message.kind {
             let re = Regex::new(r"/(?P<command>\w*)@?(?P<botname>\S*)\s?(?P<arg>.*)").unwrap();
             if let Some(cap) = re.captures(data.as_str()) {
