@@ -4,9 +4,9 @@ use telegram_bot::*;
 
 mod app;
 mod command;
-use command::count::Count;
-use command::select::Select;
-use command::schoolfood::Schoolfood;
+use command::Count;
+use command::Select;
+use command::Schoolfood;
 use app::App;
  
 #[tokio::main]

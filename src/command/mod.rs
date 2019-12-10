@@ -1,9 +1,13 @@
 use telegram_bot::*;
 use async_trait::async_trait;
 
-pub mod count;
-pub mod select;
-pub mod schoolfood;
+mod count;
+mod select;
+mod schoolfood;
+
+pub use count::Count;
+pub use select::Select;
+pub use schoolfood::Schoolfood;
 
 #[async_trait]
 pub trait Command {
