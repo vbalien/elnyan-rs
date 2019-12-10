@@ -53,7 +53,7 @@ impl Command for Schoolfood {
             acc
         });
         
-        api.send(message.chat.text(data)).await?;
+        api.send(message.chat.text(format!("{}\n{}", local.format("%Y년 %m월 %d일 %A 학식"), data))).await?;
         Ok(())
     }
 }
