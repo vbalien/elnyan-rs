@@ -30,13 +30,13 @@ impl Command for Schoolfood {
     async fn execute(&self, api: Api, message: &Message, _: &str) -> Result<(), Box<dyn std::error::Error>> {
         let local = Local::now();
         let url = "http://soongguri.com/menu/m_menujson.php";
+        let re = Regex::new(r#"<[^>]*>"#).unwrap();
         let data: HashMap<String, HashMap<String, String>> = reqwest::get(url)
             .await?
             .json()
             .await?;
         let data = data.get("학생식당").unwrap();
         let data: Vec<_> = data.iter().map(|(kind, foods)| {
-            let re = Regex::new(r#"<[^>]*>"#).unwrap();
             let foods: Vec<String> = re.replace_all(foods, "\n").split("\n").filter(|x| {
                 !x.trim().is_empty()
             }).map(|s| {String::from(s)}).collect();
