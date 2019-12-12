@@ -1,9 +1,10 @@
 use telegram_bot::*;
 use async_trait::async_trait;
 use regex::Regex;
-use chrono::*;
-
 use crate::command::Command;
+use chrono::Local;
+use std::collections::HashMap;
+
 
 pub struct Schoolfood {}
 
@@ -27,23 +28,21 @@ impl FoodData {
 #[async_trait]
 impl Command for Schoolfood {
     async fn execute(&self, api: Api, message: &Message, _: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let local: DateTime<Local> = Local::now();
-        let url = format!("http://m.soongguri.com/m_req/m_menu.php?rcd=1&sdt={}", local.format("%Y%m%d").to_string());
-        let body = reqwest::get(&url)
+        let local = Local::now();
+        let url = "http://soongguri.com/menu/m_menujson.php";
+        let data: HashMap<String, HashMap<String, String>> = reqwest::get(url)
             .await?
-            .text()
+            .json()
             .await?;
-        let re = Regex::new(r#"<td class="menu_nm">(.*)</td>\s*<td class="menu_list"><div>(.*)</div>"#).unwrap();
-        let data: Vec<_> = re.captures_iter(&body).map(|cap| {
+        let data = data.get("학생식당").unwrap();
+        let data: Vec<_> = data.iter().map(|(kind, foods)| {
+            let re = Regex::new(r#"<[^>]*>"#).unwrap();
+            let foods: Vec<String> = re.replace_all(foods, "\n").split("\n").filter(|x| {
+                !x.trim().is_empty()
+            }).map(|s| {String::from(s)}).collect();
             FoodData {
-                kind: String::from(&cap[1]),
-                foods: String::from(&cap[2])
-                    .split("</div><div>").filter(|x| {
-                        let tmp = String::from(*x);
-                        !tmp.contains("<div") && !tmp.contains("<span")
-                    })
-                    .map(|s| {String::from(s)})
-                    .collect(),
+                kind: kind.clone(),
+                foods,
             }
         }).collect();
         let data: String = data.iter().fold(String::from(""), |mut acc, x| {
@@ -57,4 +56,3 @@ impl Command for Schoolfood {
         Ok(())
     }
 }
-
