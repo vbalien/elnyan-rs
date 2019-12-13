@@ -37,7 +37,7 @@ impl Command for Schoolfood {
             .await?;
         let data = data.get("학생식당").unwrap();
         let data: Vec<_> = data.iter().map(|(kind, foods)| {
-            let foods: Vec<String> = re.replace_all(foods, "\n").split("\n").filter(|x| {
+            let foods: Vec<String> = re.split(foods).filter(|x| {
                 !x.trim().is_empty()
             }).map(|s| {String::from(s)}).collect();
             FoodData {
