@@ -32,15 +32,15 @@ impl Command for Schoolfood {
         let local = Local::now();
         let url = "http://soongguri.com/menu/m_menujson.php";
         let re = Regex::new(r#"<[^>]*>"#).unwrap();
+        let re_eng = Regex::new(r#"[A-Za-z]"#).unwrap();
         let data: HashMap<String, HashMap<String, String>> = reqwest::get(url)
             .await?
             .json()
             .await?;
-        println!("{:?}", data);
         let data = data.get("학생식당").unwrap();
         let data: Vec<_> = sections.iter().map(|section| {
             let foods: Vec<String> = re.split(data.get(*section).unwrap()).filter(|x| {
-                !x.trim().is_empty()
+                !x.trim().is_empty() && !re_eng.is_match(x)
             }).map(|s| {String::from(s)}).collect();
             FoodData {
                 kind: section.to_string(),
