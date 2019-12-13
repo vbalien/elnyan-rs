@@ -28,6 +28,7 @@ impl FoodData {
 #[async_trait]
 impl Command for Schoolfood {
     async fn execute(&self, api: Api, message: &Message, _: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let sections = vec!["중식1", "중식2", "중식3", "석식1"];
         let local = Local::now();
         let url = "http://soongguri.com/menu/m_menujson.php";
         let re = Regex::new(r#"<[^>]*>"#).unwrap();
@@ -35,13 +36,14 @@ impl Command for Schoolfood {
             .await?
             .json()
             .await?;
+        println!("{:?}", data);
         let data = data.get("학생식당").unwrap();
-        let data: Vec<_> = data.iter().map(|(kind, foods)| {
-            let foods: Vec<String> = re.split(foods).filter(|x| {
+        let data: Vec<_> = sections.iter().map(|section| {
+            let foods: Vec<String> = re.split(data.get(*section).unwrap()).filter(|x| {
                 !x.trim().is_empty()
             }).map(|s| {String::from(s)}).collect();
             FoodData {
-                kind: kind.clone(),
+                kind: section.to_string(),
                 foods,
             }
         }).collect();
