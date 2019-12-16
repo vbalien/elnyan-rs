@@ -33,6 +33,9 @@ impl Memo {
                 "message_id": msg_id
             }
         }, Some(opts)).unwrap();
+        let mut message = message.text_reply("저장했습니다.");
+        message.reply_markup(reply_markup!(inline_keyboard, ["지우기" callback "selfdel"]));
+        ctx.api.send(message).await?;
         Ok(())
     }
 

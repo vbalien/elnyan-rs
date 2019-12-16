@@ -37,10 +37,18 @@ async fn main() -> Result<(), Error> {
         app.add_command("schoolfood", Box::new(Schoolfood{}));
         app.add_command("_", Box::new(Memo{}));
 
-        if let UpdateKind::Message(message) = update.kind {
-            tokio::spawn(async move {
-                app.run(&ctx, message).await.unwrap();
-            });
+        match update.kind {
+            UpdateKind::Message(message) => {
+                tokio::spawn(async move {
+                    app.run(&ctx, message).await.unwrap();
+                });
+            },
+            UpdateKind::CallbackQuery(callback_query) => {
+                tokio::spawn(async move {
+                    app.callback(&ctx, callback_query).await.unwrap();
+                });
+            },
+            _ => (),
         }
     }
     Ok(())

@@ -21,7 +21,7 @@ impl Command for Count {
             interval.next().await;
             counter -= 1;
         };
-       ctx.api.send(message.chat.text(format!("{}", last_msg))).await?;
+        ctx.api.send(message.chat.text(format!("{}", last_msg))).await?;
         Ok(())
     }
 }

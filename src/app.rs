@@ -20,7 +20,7 @@ impl App {
 
     async fn router(&self, ctx: &Context, message: Message) -> Result<(), Box<dyn std::error::Error>> {
         if let MessageKind::Text { ref data, .. } = message.kind {
-            let re = Regex::new(r"/(?P<command>\w*)@?(?P<botname>\S*)\s?(?P<arg>.*)").unwrap();
+            let re = Regex::new(r"/(?P<command>[^@ ]*)@?(?P<botname>\S*)\s?(?P<arg>.*)").unwrap();
             if let Some(cap) = re.captures(data.as_str()) {
                 if !cap["botname"].is_empty() && &cap["botname"] == env::var("BOT_NAME").expect("BOT_NAME not set") {
                     self.cmds[&cap["command"]].execute(ctx, &message, &cap["arg"]).await?
@@ -36,6 +36,17 @@ impl App {
         if let Err(e) = self.router(ctx, message).await {
             println!("{:?}", e);
         }
+        Ok(())
+    }
+
+    pub async fn callback(&self, ctx: &Context, cbq: CallbackQuery) -> Result<(), Error> {
+        match cbq.data {
+            Some(data) => match data.as_str() {
+                "selfdel" =>  ctx.api.send(cbq.message.unwrap().delete()).await?,
+                _ => (),
+            },
+            _ => (),
+        };
         Ok(())
     }
 
