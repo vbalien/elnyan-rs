@@ -22,8 +22,10 @@ impl App {
         if let MessageKind::Text { ref data, .. } = message.kind {
             let re = Regex::new(r"/(?P<command>\w*)@?(?P<botname>\S*)\s?(?P<arg>.*)").unwrap();
             if let Some(cap) = re.captures(data.as_str()) {
-                if cap["botname"].len() <= 0 || &cap["botname"] == env::var("BOT_NAME").expect("BOT_NAME not set") {
+                if !cap["botname"].is_empty() && &cap["botname"] == env::var("BOT_NAME").expect("BOT_NAME not set") {
                     self.cmds[&cap["command"]].execute(ctx, &message, &cap["arg"]).await?
+                } else if self.cmds.contains_key("_") && cap["botname"].is_empty() && !self.cmds.contains_key(&cap["command"]) {
+                    self.cmds["_"].execute(ctx, &message, &cap["command"]).await?
                 }
             }
         };

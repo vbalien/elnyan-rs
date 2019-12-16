@@ -1,0 +1,64 @@
+use telegram_bot::*;
+use async_trait::async_trait;
+use mongodb::{Bson, bson, doc};
+use mongodb::{ThreadedClient, db::ThreadedDatabase};
+use mongodb::coll::options::UpdateOptions;
+
+use crate::command::Command;
+use crate::Context;
+
+pub struct Memo {}
+
+impl Memo {
+    async fn do_reply(
+        &self,
+        ctx: &Context,
+        reply: &Box<MessageOrChannelPost>,
+        message: &Message,
+        arg: &str
+    ) -> Result<(), Box<dyn std::error::Error>>
+    {
+        let coll = ctx.db.db("anitable").collection("memos");
+        let msg_id = reply.to_message_id().to_string().parse::<i64>().unwrap();
+        let chat_id = message.to_source_chat().to_string().parse::<i64>().unwrap();
+        let mut opts = UpdateOptions::new();
+        opts.upsert = Some(true);
+        coll.update_one(doc!{
+            "name": arg,
+            "chat_id": chat_id
+        }, doc!{
+            "$set": {
+                "name": arg,
+                "chat_id": chat_id,
+                "message_id": msg_id
+            }
+        }, Some(opts)).unwrap();
+        Ok(())
+    }
+
+    async fn do_msg(&self, ctx: &Context, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let coll = ctx.db.db("anitable").collection("memos");
+        let id = message.chat.id().to_string().parse::<i64>().unwrap();
+        let doc = coll.find_one(Some(doc!{"name": arg, "chat_id": id}), None).unwrap().unwrap();
+        let msg_id = match doc.get("message_id") {
+            Some(&Bson::I64(msg_id)) => msg_id,
+            Some(&Bson::I32(msg_id)) => msg_id as i64,
+            _ => return Ok(()),
+        };
+        let req = ForwardMessage::new(MessageId::new(msg_id), &message.to_source_chat(), &message.to_source_chat());
+        ctx.api.send(req).await?;
+        Ok(())
+    }
+}
+
+#[async_trait]
+impl Command for Memo {
+    async fn execute(&self, ctx: &Context, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(reply) = &message.reply_to_message {
+            self.do_reply(ctx, reply, message, arg).await?;
+        } else {
+            self.do_msg(ctx, message, arg).await?;
+        }
+        Ok(())
+    }
+}

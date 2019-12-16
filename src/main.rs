@@ -8,6 +8,7 @@ mod command;
 use command::Count;
 use command::Select;
 use command::Schoolfood;
+use command::Memo;
 use app::App;
 
 #[derive(Clone)]
@@ -34,6 +35,7 @@ async fn main() -> Result<(), Error> {
         app.add_command("cnt", Box::new(Count{}));
         app.add_command("sel", Box::new(Select{}));
         app.add_command("schoolfood", Box::new(Schoolfood{}));
+        app.add_command("_", Box::new(Memo{}));
 
         if let UpdateKind::Message(message) = update.kind {
             tokio::spawn(async move {
