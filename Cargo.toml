@@ -17,3 +17,4 @@ chrono = "0.4.10"
 reqwest = { version = "0.10.0-alpha.2", features = ["json"] }
 failure = "0.1"
 mongodb = "0.3"
+anitable = "0.1"

@@ -39,11 +39,20 @@ impl App {
         Ok(())
     }
 
-    pub async fn callback(&self, ctx: &Context, cbq: CallbackQuery) -> Result<(), Error> {
-        match cbq.data {
+    pub async fn callback(&self, ctx: &Context, cbq: &CallbackQuery) -> Result<(), Box<dyn std::error::Error>> {
+        match &cbq.data {
             Some(data) => match data.as_str() {
-                "selfdel" =>  ctx.api.send(cbq.message.unwrap().delete()).await?,
-                _ => (),
+                "selfdel" =>  ctx.api.send(&cbq.message.as_ref().unwrap().delete()).await?,
+                _ => {
+                    for (_, cmd) in self.cmds.iter() {
+                        if let Some(name) = cmd.name() {
+                            let re = Regex::new(&format!("^{}/", name)).unwrap();
+                            if re.is_match(&data) {
+                                cmd.callback(ctx, &cbq).await?;
+                            }
+                        }
+                    }
+                },
             },
             _ => (),
         };

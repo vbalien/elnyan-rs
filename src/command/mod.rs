@@ -6,13 +6,19 @@ mod count;
 mod select;
 mod schoolfood;
 mod memo;
+mod anitable;
 
 pub use count::Count;
 pub use select::Select;
 pub use schoolfood::Schoolfood;
 pub use memo::Memo;
+pub use self::anitable::Anitable;
 
 #[async_trait]
 pub trait Command {
-    async fn execute(&self, api: &Context, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>>;
+    fn name(&self) -> Option<&'static str> {
+        None
+    }
+    async fn execute(&self, ctx: &Context, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>>;
+    async fn callback(&self, _ctx: &Context, _callback_query: &CallbackQuery) -> Result<(), Box<dyn std::error::Error>> { Ok(()) }
 }

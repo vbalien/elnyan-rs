@@ -5,10 +5,7 @@ use mongodb::{Client, ThreadedClient};
 
 mod app;
 mod command;
-use command::Count;
-use command::Select;
-use command::Schoolfood;
-use command::Memo;
+use command::*;
 use app::App;
 
 #[derive(Clone)]
@@ -35,6 +32,7 @@ async fn main() -> Result<(), Error> {
         app.add_command("cnt", Box::new(Count{}));
         app.add_command("sel", Box::new(Select{}));
         app.add_command("schoolfood", Box::new(Schoolfood{}));
+        app.add_command("anitable", Box::new(Anitable::new()));
         app.add_command("_", Box::new(Memo{}));
 
         match update.kind {
@@ -45,7 +43,7 @@ async fn main() -> Result<(), Error> {
             },
             UpdateKind::CallbackQuery(callback_query) => {
                 tokio::spawn(async move {
-                    app.callback(&ctx, callback_query).await.unwrap();
+                    app.callback(&ctx, &callback_query).await.unwrap();
                 });
             },
             _ => (),
