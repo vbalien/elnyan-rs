@@ -36,11 +36,17 @@ impl Anitable {
     async fn get_data(&self, week: usize) -> Result<String, Box<dyn std::error::Error>> {
         let tabletype = Tabletype::try_from(week as u8).unwrap();
         let data = self.client.list(tabletype).await?;
-        let data = data.iter().fold(format!("{}요일 애니 편성표\n━━━━━━━━━━━━━━━", self.week_data.get(week).unwrap()), |mut acc, x| {
-            let to_str = format!("\n{}:{} │ {}", &x.time[..2], &x.time[2..], x.subject);
+        let mut data = data.iter().enumerate().fold(format!("┌─────────────────\n│{}요일 애니 편성표", self.week_data.get(week).unwrap()), |mut acc, (i, x)| {
+            if i == 0 {
+                acc.push_str("\n├───┬─────────────");
+            } else {
+                acc.push_str("\n├───┼─────────────");
+            }
+            let to_str = format!("\n│ {}:{} │ {:.15}", &x.time[..2], &x.time[2..], x.subject);
             acc.push_str(&to_str);
             acc
         });
+        data.push_str("\n└───┴─────────────");
         Ok(data)
     }
 }
