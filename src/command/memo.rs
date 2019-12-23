@@ -1,7 +1,7 @@
 use telegram_bot::*;
 use async_trait::async_trait;
 use mongodb::{Bson, bson, doc};
-use mongodb::{ThreadedClient, db::ThreadedDatabase};
+use mongodb::db::ThreadedDatabase;
 use mongodb::coll::options::UpdateOptions;
 
 use crate::command::CommandKind;
@@ -25,7 +25,7 @@ impl Memo {
         arg: &str
     ) -> Result<(), Box<dyn std::error::Error>>
     {
-        let coll = ctx.db.db("anitable").collection("memos");
+        let coll = ctx.db.collection("memos");
         let msg_id = reply.to_message_id().to_string().parse::<i64>().unwrap();
         let chat_id = message.to_source_chat().to_string().parse::<i64>().unwrap();
         let mut opts = UpdateOptions::new();
@@ -47,7 +47,7 @@ impl Memo {
     }
 
     async fn do_msg(&self, ctx: &Context, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let coll = ctx.db.db("anitable").collection("memos");
+        let coll = ctx.db.collection("memos");
         let id = message.chat.id().to_string().parse::<i64>().unwrap();
         let doc = coll.find_one(Some(doc!{"name": arg, "chat_id": id}), None).unwrap().unwrap();
         let msg_id = match doc.get("message_id") {

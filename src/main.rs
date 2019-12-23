@@ -1,7 +1,7 @@
 use std::env;
 use futures::StreamExt;
 use telegram_bot::*;
-use mongodb::{Client, ThreadedClient};
+use mongodb::{ThreadedClient, db::Database};
 use std::sync::Arc;
 
 mod command;
@@ -12,7 +12,7 @@ use crate::command::*;
 #[derive(Clone)]
 pub struct Context {
     api: Api,
-    db: Client,
+    db: Database,
     botname: String
 }
 
@@ -22,7 +22,7 @@ async fn main() -> Result<(), Error> {
     let context = Context {
         api: Api::new(token),
         db: mongodb::Client::connect("localhost", 27017)
-            .expect("Failed to initialize client."),
+            .expect("Failed to initialize client.").db("elnyan"),
         botname: env::var("BOT_NAME").expect("BOT_NAME not set"),
     };
 
