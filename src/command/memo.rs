@@ -4,10 +4,17 @@ use mongodb::{Bson, bson, doc};
 use mongodb::{ThreadedClient, db::ThreadedDatabase};
 use mongodb::coll::options::UpdateOptions;
 
+use crate::command::CommandKind;
 use crate::command::Command;
 use crate::Context;
 
 pub struct Memo {}
+
+impl Memo {
+    pub fn new() -> CommandKind {
+        CommandKind::Command(Box::new(Self {}))
+    }
+}
 
 impl Memo {
     async fn do_reply(
@@ -56,7 +63,7 @@ impl Memo {
 
 #[async_trait]
 impl Command for Memo {
-    async fn execute(&self, ctx: &Context, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>> {
+    async fn on_command(&self, ctx: &Context, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(reply) = &message.reply_to_message {
             self.do_reply(ctx, reply, message, arg).await?;
         } else {

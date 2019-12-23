@@ -1,13 +1,21 @@
 use telegram_bot::*;
 use async_trait::async_trait;
 use regex::Regex;
-use crate::command::Command;
-use crate::Context;
 use chrono::Local;
 use std::collections::HashMap;
 
+use crate::command::CommandKind;
+use crate::command::Command;
+use crate::Context;
+
 
 pub struct Schoolfood {}
+
+impl Schoolfood {
+    pub fn new() -> CommandKind {
+        CommandKind::Command(Box::new(Self {}))
+    }
+}
 
 #[derive(Debug, Clone)]
 struct FoodData {
@@ -28,7 +36,7 @@ impl FoodData {
 
 #[async_trait]
 impl Command for Schoolfood {
-    async fn execute(&self, ctx: &Context, message: &Message, _: &str) -> Result<(), Box<dyn std::error::Error>> {
+    async fn on_command(&self, ctx: &Context, message: &Message, _: &str) -> Result<(), Box<dyn std::error::Error>> {
         let sections = vec!["조식1", "조식2", "조식3", "중식1", "중식2", "중식3", "석식1", "석식2", "석식3"];
         let local = Local::now();
         let url = "http://soongguri.com/menu/m_menujson.php";

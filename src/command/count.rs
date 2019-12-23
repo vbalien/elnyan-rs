@@ -3,14 +3,21 @@ use std::time::Duration;
 use telegram_bot::*;
 use async_trait::async_trait;
 
+use crate::command::CommandKind;
 use crate::command::Command;
 use crate::Context;
 
 pub struct Count {}
 
+impl Count {
+    pub fn new() -> CommandKind {
+        CommandKind::Command(Box::new(Self {}))
+    }
+}
+
 #[async_trait]
 impl Command for Count {
-    async fn execute(&self, ctx: &Context, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>> {
+    async fn on_command(&self, ctx: &Context, message: &Message, arg: &str) -> Result<(), Box<dyn std::error::Error>> {
         let args: Vec<&str> = arg.trim().split(' ').collect();
         let last_msg = if args.len() <= 1 { "ㄱㄱ" } else { &args[1] };
         let mut counter: u32 = args[0].parse().unwrap_or(5);

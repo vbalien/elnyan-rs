@@ -4,8 +4,9 @@ use anitable::Tabletype;
 use std::convert::TryFrom;
 use chrono::{Local, Datelike};
 
-use crate::command::Command;
+use crate::command::CommandWithCallback;
 use crate::Context;
+use crate::command::CommandKind;
 
 pub struct Anitable {
     week_data: Vec<&'static str>,
@@ -13,11 +14,11 @@ pub struct Anitable {
 }
 
 impl Anitable {
-    pub fn new() -> Self {
-        Self{
+    pub fn new() -> CommandKind {
+        CommandKind::CommandWithCallback(Box::new(Self {
             week_data: vec!["일","월","화","수","목","금","토"],
             client: anitable::Anitable::new(),
-        }
+        }))
     }
 
     fn make_keyboard(&self, selected: usize) -> InlineKeyboardMarkup {
@@ -49,9 +50,10 @@ impl Anitable {
 }
 
 #[async_trait]
-impl Command for Anitable {
-    fn name(&self) -> Option<&'static str> { Some("anitable") }
-    async fn execute(&self, ctx: &Context, message: &Message, _arg: &str) -> Result<(), Box<dyn std::error::Error>> {
+impl CommandWithCallback for Anitable {
+    fn name(&self) -> Option<&'static str> {Some("anitable")}
+
+    async fn on_command(&self, ctx: &Context, message: &Message, _arg: &str) -> Result<(), Box<dyn std::error::Error>> {
         let local = Local::now();
         let week = (local.weekday() as usize + 1) % 7;
         let data = self.get_data(week).await?;
@@ -61,7 +63,7 @@ impl Command for Anitable {
         Ok(())
     }
 
-    async fn callback(&self, ctx: &Context, callback_query: &CallbackQuery) -> Result<(), Box<dyn std::error::Error>> {
+    async fn on_callback(&self, ctx: &Context, callback_query: &CallbackQuery) -> Result<(), Box<dyn std::error::Error>> {
         let week = *callback_query.data.as_ref().unwrap().split("/").collect::<Vec<&str>>().get(1).unwrap();
         let week: usize = week.parse().unwrap();
         let data = self.get_data(week).await?;
@@ -71,4 +73,3 @@ impl Command for Anitable {
         Ok(())
     }
 }
-
