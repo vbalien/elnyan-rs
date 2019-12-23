@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::env;
+use std::ops::Index;
 use crate::Context;
 use telegram_bot::*;
 use regex::Regex;
@@ -22,10 +22,20 @@ impl App {
         if let MessageKind::Text { ref data, .. } = message.kind {
             let re = Regex::new(r"/(?P<command>[^@ ]*)@?(?P<botname>\S*)\s?(?P<arg>.*)").unwrap();
             if let Some(cap) = re.captures(data.as_str()) {
-                if !cap["botname"].is_empty() && &cap["botname"] == env::var("BOT_NAME").expect("BOT_NAME not set") {
-                    self.cmds.get(&cap["command"]).unwrap().do_command(ctx, &message, &cap["arg"]).await?
-                } else if self.cmds.contains_key("_") && cap["botname"].is_empty() && !self.cmds.contains_key(&cap["command"]) {
-                    self.cmds.get("_").unwrap().do_command(ctx, &message, &cap["command"]).await?
+                let botname = cap.index("botname");
+                let command = cap.index("command");
+                let arg = cap.index("arg");
+
+                if (botname.is_empty() || botname == ctx.botname)
+                    && self.cmds.contains_key(command)
+                {
+                    self.cmds.get(command).unwrap().do_command(ctx, &message, arg).await?
+                }
+                else if self.cmds.contains_key("_")
+                    && botname.is_empty()
+                    && !self.cmds.contains_key(command)
+                {
+                    self.cmds.get("_").unwrap().do_command(ctx, &message, command).await?
                 }
             }
         };

@@ -13,6 +13,7 @@ use crate::command::*;
 pub struct Context {
     api: Api,
     db: Client,
+    botname: String
 }
 
 #[tokio::main]
@@ -22,6 +23,7 @@ async fn main() -> Result<(), Error> {
         api: Api::new(token),
         db: mongodb::Client::connect("localhost", 27017)
             .expect("Failed to initialize client."),
+        botname: env::var("BOT_NAME").expect("BOT_NAME not set"),
     };
 
     let mut app = App::new();
