@@ -1,19 +1,19 @@
-use std::env;
 use futures::StreamExt;
-use telegram_bot::*;
-use mongodb::{ThreadedClient, db::Database};
+use mongodb::{db::Database, ThreadedClient};
+use std::env;
 use std::sync::Arc;
+use telegram_bot::*;
 
-mod command;
 mod app;
-use app::App;
+mod command;
 use crate::command::*;
+use app::App;
 
 #[derive(Clone)]
 pub struct Context {
     api: Api,
     db: Database,
-    botname: String
+    botname: String,
 }
 
 #[tokio::main]
@@ -22,7 +22,8 @@ async fn main() -> Result<(), Error> {
     let context = Context {
         api: Api::new(token),
         db: mongodb::Client::connect("localhost", 27017)
-            .expect("Failed to initialize client.").db("elnyan"),
+            .expect("Failed to initialize client.")
+            .db("elnyan"),
         botname: env::var("BOT_NAME").expect("BOT_NAME not set"),
     };
 
@@ -46,12 +47,12 @@ async fn main() -> Result<(), Error> {
                 tokio::spawn(async move {
                     app.message(&ctx, message).await.unwrap();
                 });
-            },
+            }
             UpdateKind::CallbackQuery(callback_query) => {
                 tokio::spawn(async move {
                     app.callback(&ctx, callback_query).await.unwrap();
                 });
-            },
+            }
             _ => (),
         }
     }
